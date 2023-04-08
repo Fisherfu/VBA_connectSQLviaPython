@@ -1,0 +1,86 @@
+
+
+# -*- coding: utf-8 -*-
+"""
+
+@author: Weiche.Fu
+"""
+
+
+
+import os, os.path
+import win32com.client
+import pandas as pd 
+import pyodbc,pymssql
+
+## set path
+os.chdir("set the path here")
+
+
+
+#### lauch EXCEL-VBA script: filename.xls  Module1.巨集1
+
+if os.path.exists("filename.xls"):
+    xl=win32com.client.Dispatch("Excel.Application")
+    xl.Workbooks.Open(os.path.abspath("filename.xls"))
+    xl.Application.Run("filename.xls!Module1.巨集1")
+##    xl.Application.Save() # if you want to save then uncomment this line and change delete the ", ReadOnly=1" part from the open function.
+    xl.Application.Quit() # Comment this out if your excel script closes
+    del xl    
+
+
+
+
+##Read Dataframe via Pandas: filename.xls, sheet='sheet1' 
+os.chdir("set the path here")
+datA2=pd.read_excel("filename.xls",sheet_name='sheet1')
+
+
+### ETL data here
+dt2=datA2.rename(columns={
+                  'Unnamed: 0':'A',
+                  'Unnamed: 1':'B',
+                  'Unnamed: 3':'C'
+                },inplace=True)
+
+datA2.drop([0,1])
+datA2.fillna('', inplace=True)
+
+
+
+###Connect - SQLserver
+cnxn_str = ("Driver={SQL Server};"
+                "Server=xx.xxx.xxx.xxx;"
+                "Database=xxx;"
+                "UID=xxx;"
+                "PWD=xxxx;")
+cnxn = pyodbc.connect(cnxn_str)
+cursor = cnxn.cursor()
+
+
+###Conduct SQL script : creat table and import 
+cursor.execute('''
+		CREATE TABLE [dbo].[name]
+                    (
+                     	[var1] [nvarchar](255) NULL,
+                     	[var2] [nvarchar](255) NULL,
+                      [var3] [nvarchar](255) NULL,
+                      [var4] [nvarchar](255) NULL
+                  
+                    ) ON [PRIMARY]
+                ''') 
+       
+for index, row in datA2.iterrows():
+      cursor.execute("INSERT INTO name \
+                      ([var1],[var2],[var3],[var4] \
+                      )  values(?,?,?,?)" 
+                      , row.var1, row.var2,row.var3,row.var4)                
+
+
+            
+cnxn.commit()
+cursor.close() 
+
+
+
+
