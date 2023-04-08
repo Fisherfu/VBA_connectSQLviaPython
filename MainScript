@@ -40,7 +40,7 @@ datA2=pd.read_excel("filename.xls",sheet_name='sheet1')
 dt2=datA2.rename(columns={
                   'Unnamed: 0':'A',
                   'Unnamed: 1':'B',
-                  'Unnamed: 3':'C'
+                  'Unnamed: 2':'C'
                 },inplace=True)
 
 datA2.drop([0,1])
